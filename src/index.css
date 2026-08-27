@@ -1,0 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Editorial design tokens ─────────────────────────────── */
+:root {
+  --paper:       #F0EDE5;
+  --surface:     #F8F6F0;
+  --white:       #FDFCF9;
+  --ink:         #1C1A17;
+  --ink-mid:     #4A4742;
+  --ink-dim:     #8B8780;
+  --ink-faint:   #C0BDB8;
+  --rule:        rgba(28,26,23,0.07);
+  --rule-md:     rgba(28,26,23,0.12);
+  --rule-strong: rgba(28,26,23,0.20);
+  --rule-heavy:  rgba(28,26,23,0.30);
+  --ed-green:    #1A5C35;
+  --ed-amber:    #8A5400;
+  --ed-red:      #8C1A1A;
+  --ed-blue:     #1A4A8C;
+  --ed-cyan:     #0A6578;
+  --ed-purple:   #5A3A8C;
+  --ed-slate:    #374151;
+  --ed-accent:   #AE4716;
+  --sb-bg:       #19170F;
+  --f-display:   'Cormorant Garamond', 'Garamond', Georgia, serif;
+  --f-ui:        'DM Sans', system-ui, sans-serif;
+  --f-mono:      'DM Mono', 'Menlo', monospace;
+}
+
+/* ── shadcn / Radix token overrides — warm paper palette ─── */
+@layer base {
+  :root {
+    --background:             43 27% 92%;
+    --foreground:             36 8% 10%;
+    --card:                   40 25% 96%;
+    --card-foreground:        36 8% 10%;
+    --popover:                40 40% 98%;
+    --popover-foreground:     36 8% 10%;
+    --primary:                19 78% 38%;
+    --primary-foreground:     40 50% 98%;
+    --secondary:              40 15% 88%;
+    --secondary-foreground:   36 8% 10%;
+    --muted:                  40 15% 90%;
+    --muted-foreground:       36 5% 52%;
+    --accent:                 40 15% 88%;
+    --accent-foreground:      36 8% 10%;
+    --destructive:            0 69% 33%;
+    --destructive-foreground: 40 50% 98%;
+    --border:                 36 12% 83%;
+    --input:                  36 12% 83%;
+    --ring:                   19 78% 38%;
+    --radius:                 0.25rem;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body {
+    @apply text-foreground bg-background;
+    font-family: var(--f-ui);
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+  }
+  html, body, #root { height: 100%; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--rule-strong); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--rule-heavy); }
+
+/* ── Editorial surface (replaces glass) ─────────────────── */
+.glass {
+  background: var(--surface);
+  border: 1px solid var(--rule-md);
+}
+.glass-strong {
+  background: var(--white);
+  border: 1px solid var(--rule-strong);
+}
+.glass-hero {
+  background: var(--white);
+  border: 1px solid var(--rule-md);
+}
+.glass-risk {
+  background: rgba(140,26,26,0.04);
+  border: 1px solid rgba(140,26,26,0.15);
+}
+
+/* ── Editorial divider ───────────────────────────────────── */
+.editorial-divider {
+  height: 1px;
+  background: var(--rule);
+  border: none;
+}
+
+/* ── Status text — DM Mono, colored, no pill ─────────────── */
+.st-concept    { color: var(--ed-slate);  font-family: var(--f-mono); font-size: 13px; font-weight: 700; }
+.st-committed  { color: var(--ed-blue);   font-family: var(--f-mono); font-size: 13px; font-weight: 700; }
+.st-ec         { color: var(--ed-cyan);   font-family: var(--f-mono); font-size: 13px; font-weight: 700; }
+.st-indev      { color: var(--ed-purple); font-family: var(--f-mono); font-size: 13px; font-weight: 700; }
+.st-validation { color: var(--ed-amber);  font-family: var(--f-mono); font-size: 13px; font-weight: 700; }
+.st-delivered  { color: var(--ed-green);  font-family: var(--f-mono); font-size: 13px; font-weight: 700; }
+.st-deferred   { color: var(--ed-red);    font-family: var(--f-mono); font-size: 13px; font-weight: 700; }
+
+/* ── Progress bar ────────────────────────────────────────── */
+.prog-track { height: 2px; background: var(--rule-md); border-radius: 1px; overflow: hidden; }
+.prog-bar   { height: 2px; border-radius: 1px; transition: width 0.6s ease; }
+
+/* ── Animations ──────────────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+.animate-fade-in { animation: fade-in 0.2s ease-out forwards; }
+
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+.animate-slide-in-right { animation: slide-in-right 0.2s cubic-bezier(0.4,0,0.2,1) forwards; }
+
+/* ── Table row hover ─────────────────────────────────────── */
+.table-row-hover { transition: background 0.1s; }
+.table-row-hover:hover { background: var(--rule); }

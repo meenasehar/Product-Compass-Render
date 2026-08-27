@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: product-compass-bff
+    runtime: node
+    buildCommand: node scripts/bake-config.mjs && npm run server:build
+    startCommand: node server-dist/index.js
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: ALLOWED_ORIGINS
+        value: https://sensai.paloaltonetworks.com
+      - key: GOOGLE_REDIRECT_URI
+        sync: false

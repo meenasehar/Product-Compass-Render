@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard Layout Concepts — Product Compass</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    background: #05060e;
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* ── PICKER BAR ─────────────────────────────────── */
+  .picker {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(5, 6, 22, 0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0;
+  }
+  .picker-label {
+    padding: 14px 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #64748b;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    white-space: nowrap;
+  }
+  .picker-btn {
+    flex: 1;
+    padding: 14px 24px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    transition: all 0.15s;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    text-align: left;
+  }
+  .picker-btn:hover { color: #e2e8f0; background: rgba(255,255,255,0.03); }
+  .picker-btn.active { color: #e2e8f0; background: rgba(79,142,247,0.08); border-bottom: 2px solid #4f8ef7; }
+  .picker-btn span { font-size: 10px; font-weight: 500; color: #4f8ef7; margin-left: 8px; }
+
+  /* ── LAYOUT WRAPPER ─────────────────────────────── */
+  .layout { display: none; padding: 32px 36px 48px; max-width: 1100px; margin: 0 auto; }
+  .layout.active { display: block; }
+
+  /* ── SHARED: MASTHEAD ───────────────────────────── */
+  .masthead {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 28px;
+  }
+  .masthead-left {}
+  .masthead-pulse {
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 8px;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #00c896; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .masthead-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #4f8ef7; }
+  .masthead-h1 { font-size: 42px; font-weight: 900; letter-spacing: -0.02em; line-height: 1; color: #f1f5f9; }
+  .masthead-sub { font-size: 13px; color: #64748b; margin-top: 6px; }
+
+  .delivery-ring { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .delivery-ring svg { filter: drop-shadow(0 0 12px rgba(0,200,150,0.2)); }
+  .ring-label { font-size: 10px; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase; }
+
+  /* ── SHARED: STATS ROW ──────────────────────────── */
+  .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
+  .stat-card {
+    border-radius: 14px;
+    padding: 18px 20px;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.02);
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.06;
+    border-radius: inherit;
+  }
+  .stat-card.green::before { background: #00c896; }
+  .stat-card.blue::before { background: #4f8ef7; }
+  .stat-card.red::before { background: #f43f5e; }
+  .stat-card.amber::before { background: #f59e0b; }
+  .stat-label { font-size: 11px; color: #64748b; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .stat-value { font-size: 32px; font-weight: 900; letter-spacing: -0.02em; line-height: 1; }
+  .stat-card.green .stat-value { color: #00c896; }
+  .stat-card.blue .stat-value { color: #4f8ef7; }
+  .stat-card.red .stat-value { color: #f43f5e; }
+  .stat-card.amber .stat-value { color: #f59e0b; }
+  .stat-delta { font-size: 11px; color: #475569; margin-top: 4px; }
+
+  /* ── SHARED: SECTION TITLE ──────────────────────── */
+  .section-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #475569; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.05); }
+
+  /* ── AT-RISK SECTION ────────────────────────────── */
+  .at-risk-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+  .risk-card {
+    border-radius: 12px;
+    padding: 14px 18px;
+    background: rgba(244,63,94,0.06);
+    border: 1px solid rgba(244,63,94,0.18);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .risk-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .risk-body {}
+  .risk-title { font-size: 13px; font-weight: 700; color: #f1f5f9; margin-bottom: 3px; }
+  .risk-detail { font-size: 12px; color: #94a3b8; }
+  .risk-meta { display: flex; gap: 8px; margin-top: 6px; }
+  .risk-badge {
+    font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+    background: rgba(244,63,94,0.15); color: #f87171; border: 1px solid rgba(244,63,94,0.2);
+  }
+  .risk-badge.blue { background: rgba(79,142,247,0.15); color: #7ca8ff; border-color: rgba(79,142,247,0.2); }
+
+  /* ── ACTION REQUIRED ZONE ───────────────────────── */
+  .action-zone {
+    border-radius: 16px;
+    padding: 20px 24px;
+    background: rgba(244,63,94,0.05);
+    border: 1px solid rgba(244,63,94,0.2);
+    margin-bottom: 28px;
+  }
+  .action-zone-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+  }
+  .action-icon { font-size: 18px; }
+  .action-title { font-size: 15px; font-weight: 800; color: #f43f5e; letter-spacing: -0.01em; }
+  .action-count {
+    margin-left: auto;
+    font-size: 11px; font-weight: 700; color: #f87171;
+    background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.2);
+    border-radius: 20px; padding: 3px 10px;
+  }
+
+  /* ── CHARTS SECTION ─────────────────────────────── */
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .chart-card {
+    border-radius: 14px;
+    padding: 20px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .chart-title { font-size: 12px; font-weight: 700; color: #94a3b8; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .bar-label { font-size: 11px; color: #64748b; width: 160px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-track { flex: 1; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.06); overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; }
+  .bar-count { font-size: 11px; color: #475569; width: 20px; text-align: right; flex-shrink: 0; }
+
+  /* ── CONCEPT ANNOTATIONS ────────────────────────── */
+  .concept-note {
+    font-size: 11px;
+    color: #4f8ef7;
+    background: rgba(79,142,247,0.06);
+    border: 1px solid rgba(79,142,247,0.15);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .concept-note strong { color: #7ca8ff; }
+  .note-badge {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: #4f8ef7;
+    color: white;
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-right: 6px;
+  }
+
+  /* ── ANNOTATION PINS ────────────────────────────── */
+  .pin {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #4f8ef7;
+    color: white;
+    font-size: 9px;
+    font-weight: 800;
+    margin-left: 6px;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+  .pin.red { background: #f43f5e; }
+  .pin.green { background: #00c896; }
+
+  .annotations {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-top: 24px;
+  }
+  .ann-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #475569; margin-bottom: 12px; }
+  .ann-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; font-size: 12px; color: #94a3b8; line-height: 1.5; }
+  .ann-item:last-child { margin-bottom: 0; }
+  .ann-item .pin { flex-shrink: 0; margin-left: 0; margin-top: 1px; }
+</style>
+</head>
+<body>
+
+<!-- ── PICKER ──────────────────────────────────── -->
+<div class="picker">
+  <div class="picker-label">Dashboard layout concept</div>
+  <button class="picker-btn active" onclick="show('a')">
+    Option A — Progress-first, risk elevated <span>Current direction, restructured</span>
+  </button>
+  <button class="picker-btn" onclick="show('b')">
+    Option B — Risk-first when issues exist <span>Action-required as hero</span>
+  </button>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     OPTION A: Progress-first, risk elevated below masthead
+     ═══════════════════════════════════════════════ -->
+<div id="layout-a" class="layout active">
+
+  <div class="concept-note">
+    <span class="note-badge">Option A</span>
+    <strong>Progress-first, risk elevated.</strong> Delivery ring stays as the hero confidence signal. At-risk content is promoted to full-width immediately below the masthead — before any charts or data. The exec sees "we're 58% v7.0 delivered" first, then immediately "here's what needs your attention." No triple-encoding. Metric Strip removed.
+  </div>
+
+  <!-- Masthead -->
+  <div class="masthead">
+    <div class="masthead-left">
+      <div class="masthead-pulse">
+        <div class="dot"></div>
+        <span class="masthead-eyebrow">Prisma SD-WAN · v7.0 in progress</span>
+      </div>
+      <div class="masthead-h1">Product Compass</div>
+      <div class="masthead-sub">Q4 FY26 · Enterprise SD-WAN Product Intelligence</div>
+    </div>
+    <!-- Delivery ring (v7.0 scoped — P1 fix applied) -->
+    <div class="delivery-ring">
+      <svg width="108" height="108">
+        <circle cx="54" cy="54" r="44" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="8" />
+        <!-- 58% of circumference = 160.6 of 276.5 -->
+        <circle cx="54" cy="54" r="44" fill="none" stroke="#00c896" stroke-width="8"
+          stroke-dasharray="160 276" stroke-linecap="round"
+          transform="rotate(-90 54 54)" />
+        <text x="54" y="48" text-anchor="middle" fill="#00c896" font-size="18" font-weight="900" font-family="-apple-system,sans-serif">58%</text>
+        <text x="54" y="62" text-anchor="middle" fill="#475569" font-size="9" font-family="-apple-system,sans-serif">v7.0 shipped</text>
+      </svg>
+      <div class="ring-label">v7.0 scope only <span class="pin green" style="width:14px;height:14px;font-size:8px;">✓</span></div>
+    </div>
+  </div>
+
+  <!-- Stats (no triple-encoding: Cover Story only, Metric Strip removed) -->
+  <div class="stats-row">
+    <div class="stat-card green">
+      <div class="stat-label">Delivered</div>
+      <div class="stat-value">7</div>
+      <div class="stat-delta">+3 this sprint</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-label">In Development</div>
+      <div class="stat-value">6</div>
+      <div class="stat-delta">4 committed · 2 in dev</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">At Risk</div>
+      <div class="stat-value">5</div>
+      <div class="stat-delta">Needs review <span class="pin red" style="width:14px;height:14px;font-size:8px;">!</span></div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-label">Days to Q4 Close</div>
+      <div class="stat-value">68</div>
+      <div class="stat-delta">Target: Dec 31 FY26</div>
+    </div>
+  </div>
+
+  <!-- AT-RISK SECTION — full-width, immediately after stats, BEFORE charts -->
+  <div class="section-title">⚠ Action Required — 5 features at risk</div>
+  <div class="at-risk-row">
+    <div class="risk-card">
+      <div class="risk-icon">⚠</div>
+      <div class="risk-body">
+        <div class="risk-title">PSDWPM-1847 · ARIA Threshold Optimization</div>
+        <div class="risk-detail">Dependency on ARIA team delivery blocked for 3 weeks. Engineering timeline at risk for v7.0 GA.</div>
+        <div class="risk-meta">
+          <span class="risk-badge">At Risk</span>
+          <span class="risk-badge blue">AI Powered Operations</span>
+        </div>
+      </div>
+    </div>
+    <div class="risk-card">
+      <div class="risk-icon">⚠</div>
+      <div class="risk-body">
+        <div class="risk-title">PSDWPM-1834 · ION 9000 Compliance Certification</div>
+        <div class="risk-detail">Awaiting FIPS lab results. 6-week lab queue could push past v7.0 cutoff date.</div>
+        <div class="risk-meta">
+          <span class="risk-badge">At Risk</span>
+          <span class="risk-badge blue">Next-Gen Platforms</span>
+        </div>
+      </div>
+    </div>
+    <div class="risk-card">
+      <div class="risk-icon">⚠</div>
+      <div class="risk-body">
+        <div class="risk-title">PSDWPM-1901 · SD-WAN + SASE Policy Convergence</div>
+        <div class="risk-detail">Cross-team dependency with SASE engineering not yet committed. PM escalation required.</div>
+        <div class="risk-meta">
+          <span class="risk-badge">At Risk</span>
+          <span class="risk-badge blue">On-box Security & SASE</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts — pillar breakdown, moved to bottom -->
+  <div class="section-title">By Pillar</div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Features by pillar</div>
+      <div class="bar-row">
+        <div class="bar-label">Next-Gen Platforms</div>
+        <div class="bar-track"><div class="bar-fill" style="width:60%;background:#4f8ef7;"></div></div>
+        <div class="bar-count">6</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Scalable Networking</div>
+        <div class="bar-track"><div class="bar-fill" style="width:40%;background:#a78bfa;"></div></div>
+        <div class="bar-count">4</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">On-box Security & SASE</div>
+        <div class="bar-track"><div class="bar-fill" style="width:50%;background:#f59e0b;"></div></div>
+        <div class="bar-count">5</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">AI Powered Operations</div>
+        <div class="bar-track"><div class="bar-fill" style="width:40%;background:#00c896;"></div></div>
+        <div class="bar-count">4</div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Status breakdown</div>
+      <div class="bar-row">
+        <div class="bar-label">Delivered</div>
+        <div class="bar-track"><div class="bar-fill" style="width:33%;background:#00c896;"></div></div>
+        <div class="bar-count">7</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">In Development</div>
+        <div class="bar-track"><div class="bar-fill" style="width:19%;background:#a78bfa;"></div></div>
+        <div class="bar-count">4</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Committed</div>
+        <div class="bar-track"><div class="bar-fill" style="width:14%;background:#4f8ef7;"></div></div>
+        <div class="bar-count">3</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Concept</div>
+        <div class="bar-track"><div class="bar-fill" style="width:14%;background:#475569;"></div></div>
+        <div class="bar-count">3</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotations">
+    <div class="ann-title">What changed from the current design</div>
+    <div class="ann-item"><div class="pin">1</div> Metric Strip (3-card row duplicating Cover Story numbers) removed entirely</div>
+    <div class="ann-item"><div class="pin">2</div> Delivery ring now scoped to v7.0 features only, not all 21 across all releases</div>
+    <div class="ann-item"><div class="pin">3</div> At-risk section promoted to full-width, immediately after stats — before any charts</div>
+    <div class="ann-item"><div class="pin">4</div> 4th stat card shows "Days to Q4 Close" — a new, genuinely distinct metric Morgan can act on</div>
+    <div class="ann-item"><div class="pin">5</div> Pillar charts moved to bottom — they answer "how is work distributed," not "should I be worried"</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     OPTION B: Risk-first when issues exist
+     ═══════════════════════════════════════════════ -->
+<div id="layout-b" class="layout">
+
+  <div class="concept-note">
+    <span class="note-badge">Option B</span>
+    <strong>Risk-first when issues exist.</strong> When <code>atRisk.length > 0</code>, the page opens with an "Action Required" hero zone — at-risk features front and center. Delivery progress is secondary, beneath. When all features are healthy (<code>atRisk = 0</code>), the delivery ring would lead instead. This is honest and urgent but may feel alarming in a context where the exec already expects risks to exist.
+  </div>
+
+  <!-- Action Required Zone — LEADS the page -->
+  <div class="action-zone">
+    <div class="action-zone-header">
+      <div class="action-icon">⚠️</div>
+      <div class="action-title">5 features need attention before v7.0 GA</div>
+      <div class="action-count">Review required</div>
+    </div>
+    <div class="at-risk-row" style="margin-bottom:0;">
+      <div class="risk-card">
+        <div class="risk-icon">⚠</div>
+        <div class="risk-body">
+          <div class="risk-title">PSDWPM-1847 · ARIA Threshold Optimization</div>
+          <div class="risk-detail">Dependency on ARIA team delivery blocked for 3 weeks.</div>
+          <div class="risk-meta">
+            <span class="risk-badge">At Risk</span>
+            <span class="risk-badge blue">AI Powered Operations</span>
+          </div>
+        </div>
+      </div>
+      <div class="risk-card">
+        <div class="risk-icon">⚠</div>
+        <div class="risk-body">
+          <div class="risk-title">PSDWPM-1834 · ION 9000 Compliance Certification</div>
+          <div class="risk-detail">Awaiting FIPS lab results — 6-week queue may push past cutoff.</div>
+          <div class="risk-meta">
+            <span class="risk-badge">At Risk</span>
+            <span class="risk-badge blue">Next-Gen Platforms</span>
+          </div>
+        </div>
+      </div>
+      <div class="risk-card">
+        <div class="risk-icon">⚠</div>
+        <div class="risk-body">
+          <div class="risk-title">PSDWPM-1901 · SD-WAN + SASE Policy Convergence</div>
+          <div class="risk-detail">Cross-team dependency with SASE engineering not yet committed. PM escalation required.</div>
+          <div class="risk-meta">
+            <span class="risk-badge">At Risk</span>
+            <span class="risk-badge blue">On-box Security & SASE</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Masthead (secondary position) -->
+  <div class="masthead">
+    <div class="masthead-left">
+      <div class="masthead-pulse">
+        <div class="dot"></div>
+        <span class="masthead-eyebrow">Prisma SD-WAN · v7.0 in progress</span>
+      </div>
+      <div class="masthead-h1">Product Compass</div>
+      <div class="masthead-sub">Q4 FY26 · Enterprise SD-WAN Product Intelligence</div>
+    </div>
+    <div class="delivery-ring">
+      <svg width="108" height="108">
+        <circle cx="54" cy="54" r="44" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="8" />
+        <circle cx="54" cy="54" r="44" fill="none" stroke="#00c896" stroke-width="8"
+          stroke-dasharray="160 276" stroke-linecap="round"
+          transform="rotate(-90 54 54)" />
+        <text x="54" y="48" text-anchor="middle" fill="#00c896" font-size="18" font-weight="900" font-family="-apple-system,sans-serif">58%</text>
+        <text x="54" y="62" text-anchor="middle" fill="#475569" font-size="9" font-family="-apple-system,sans-serif">v7.0 shipped</text>
+      </svg>
+      <div class="ring-label">v7.0 scope only</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card green">
+      <div class="stat-label">Delivered</div>
+      <div class="stat-value">7</div>
+      <div class="stat-delta">+3 this sprint</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-label">In Development</div>
+      <div class="stat-value">6</div>
+      <div class="stat-delta">4 committed · 2 in dev</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">At Risk</div>
+      <div class="stat-value">5</div>
+      <div class="stat-delta">See above for details</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-label">Days to Q4 Close</div>
+      <div class="stat-value">68</div>
+      <div class="stat-delta">Target: Dec 31 FY26</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="section-title">By Pillar</div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Features by pillar</div>
+      <div class="bar-row">
+        <div class="bar-label">Next-Gen Platforms</div>
+        <div class="bar-track"><div class="bar-fill" style="width:60%;background:#4f8ef7;"></div></div>
+        <div class="bar-count">6</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Scalable Networking</div>
+        <div class="bar-track"><div class="bar-fill" style="width:40%;background:#a78bfa;"></div></div>
+        <div class="bar-count">4</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">On-box Security & SASE</div>
+        <div class="bar-track"><div class="bar-fill" style="width:50%;background:#f59e0b;"></div></div>
+        <div class="bar-count">5</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">AI Powered Operations</div>
+        <div class="bar-track"><div class="bar-fill" style="width:40%;background:#00c896;"></div></div>
+        <div class="bar-count">4</div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Status breakdown</div>
+      <div class="bar-row">
+        <div class="bar-label">Delivered</div>
+        <div class="bar-track"><div class="bar-fill" style="width:33%;background:#00c896;"></div></div>
+        <div class="bar-count">7</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">In Development</div>
+        <div class="bar-track"><div class="bar-fill" style="width:19%;background:#a78bfa;"></div></div>
+        <div class="bar-count">4</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Committed</div>
+        <div class="bar-track"><div class="bar-fill" style="width:14%;background:#4f8ef7;"></div></div>
+        <div class="bar-count">3</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Concept</div>
+        <div class="bar-track"><div class="bar-fill" style="width:14%;background:#475569;"></div></div>
+        <div class="bar-count">3</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotations">
+    <div class="ann-title">Key difference from Option A</div>
+    <div class="ann-item"><div class="pin red">!</div> At-risk zone is the absolute first thing — before the product name, before the delivery ring, before any positive data</div>
+    <div class="ann-item"><div class="pin">2</div> When atRisk = 0, this zone collapses and the delivery ring takes hero position — the layout is conditional</div>
+    <div class="ann-item"><div class="pin">3</div> Risk-first is more honest in a review meeting; progress-first is better for daily PM use where risk is already known</div>
+  </div>
+</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.layout').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.picker-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('layout-' + id).classList.add('active');
+  document.querySelectorAll('.picker-btn')[id === 'a' ? 0 : 1].classList.add('active');
+}
+</script>
+</body>
+</html>
